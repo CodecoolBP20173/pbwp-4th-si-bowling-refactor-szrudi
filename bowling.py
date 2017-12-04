@@ -1,45 +1,65 @@
 def score(game):
     result = 0
     frame = 1
-    in_first_half = True
-    for i in range(len(game)):
-        if game[i] == '/':
-            result += 10 - last
-        else:
-            result += get_value(game[i])
-        # if not in_first_half:
-            # frame += 1
-        if frame < 10  and get_value(game[i]) == 10:
-            if game[i] == '/':
-                result += get_value(game[i+1])
-            elif game[i] == 'X' or game[i] == 'x':
-                result += get_value(game[i+1])
-                if game[i+2] == '/':
-                    result += 10 - get_value(game[i+1])
-                else:
-                    result += get_value(game[i+2])
-        last = get_value(game[i])
-        if not in_first_half:
+    is_first_try = True
+    game = game.lower()
+
+    for roll_num in range(len(game)):
+        result += get_value(game[roll_num]) + calculate_bonus(game, roll_num, frame)
+
+        # next roll is new frame?
+        if not is_first_try:
             frame += 1
-        if in_first_half == True:
-            in_first_half = False
-        else:
-            in_first_half = True
-        if game[i] == 'X' or game[i] == 'x':
-            in_first_half = True
+        is_first_try = not is_first_try
+        if is_strike(game, roll_num):
+            is_first_try = True
             frame += 1
+
     return result
 
+
+def calculate_bonus(game, roll_num, frame):
+    bonus = 0
+    if is_spare(game, roll_num):
+        bonus -= get_value(game[roll_num - 1])
+    if is_in_game(frame) and (is_strike(game, roll_num) or is_spare(game, roll_num)):
+        bonus += get_value(game[roll_num + 1])
+        if is_strike(game, roll_num):
+            bonus += get_value(game[roll_num + 2])
+            if is_spare(game, roll_num + 2):
+                bonus -= get_value(game[roll_num + 1])
+    return bonus
+
+
+def is_strike(game, roll_num):
+    return game[roll_num] == 'x'
+
+
+def is_spare(game, roll_num):
+    return game[roll_num] == '/'
+
+
+def is_in_game(frame):
+    return frame < 10
+
+
 def get_value(char):
-    if char == '1' or char == '2' or char == '3' or \
-       char == '4' or char == '5' or char == '6' or \
-       char == '7' or char == '8' or char == '9':
-        return int(char)
-    elif char == 'X' or char == 'x':
-        return 10
-    elif char == '/':
-        return 10
-    elif char == '-':
-        return 0
-    else:
+    SCORE_TABLE = {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4,
+        "5": 5,
+        "6": 6,
+        "7": 7,
+        "8": 8,
+        "9": 9,
+        "x": 10,
+        "/": 10,
+        "-": 0,
+    }
+
+    try:
+        return SCORE_TABLE[char]
+    except ValueError:
         raise ValueError()
